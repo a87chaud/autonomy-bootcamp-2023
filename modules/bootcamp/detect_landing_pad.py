@@ -8,7 +8,7 @@ import pathlib
 import numpy as np
 import torch
 import ultralytics
-
+from ultralytics import YOLO
 from .. import bounding_box
 
 
@@ -77,7 +77,6 @@ class DetectLandingPad:
         # ============
         # ↓ BOOTCAMPERS MODIFY BELOW THIS COMMENT ↓
         # ============
-
         # Ultralytics has documentation and examples
 
         # Use the model's predict() method to run inference
@@ -86,33 +85,36 @@ class DetectLandingPad:
         # * conf
         # * device
         # * verbose
-        predictions = ...
+        predictions = self.__model.predict(source=image, conf=0.3, device=self.__DEVICE,verbose=True)
 
         # Get the Result object
-        prediction = ...
-
+        results = predictions[0]
         # Plot the annotated image from the Result object
         # Include the confidence value
-        image_annotated = ...
-
+        image_annotated = results.plot(conf=True, show=False)
         # Get the xyxy boxes list from the Boxes object in the Result object
-        boxes_xyxy = ...
-
+        boxes_xyxy = results.boxes.xyxy
         # Detach the xyxy boxes to make a copy,
         # move the copy into CPU space,
         # and convert to a numpy array
-        boxes_cpu = ...
+        boxes_cpu = boxes_xyxy.detach().cpu().numpy()
 
         # Loop over the boxes list and create a list of bounding boxes
         bounding_boxes = []
         # Hint: .shape gets the dimensions of the numpy array
-        # for i in range(0, ...):
-            # Create BoundingBox object and append to list
-            # result, box = ...
+        
+        for curr_box in boxes_cpu:
+            result, box = bounding_box.BoundingBox.create(curr_box)
+            if result:
+                bounding_boxes.append(box)
+            else:
+                return ([],image_annotated)
+                
 
         # Remove this when done
-        raise NotImplementedError
+        return (bounding_boxes, image_annotated)
 
         # ============
         # ↑ BOOTCAMPERS MODIFY ABOVE THIS COMMENT ↑
         # ============
+
